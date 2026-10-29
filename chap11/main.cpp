@@ -1,3 +1,4 @@
+//#include "vulkan/vulkan.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -306,7 +307,8 @@ bool isDeviceSuitable(vk::raii::PhysicalDevice const &physicalDevice)
 		bool supportsRequiredFeatures = features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
 		                                features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
 		                                features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
-		                                features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
+		                                features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
+                                    features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy;
 
 		// Return true if the physicalDevice meets all the criteria
 		return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;
@@ -350,11 +352,10 @@ bool isDeviceSuitable(vk::raii::PhysicalDevice const &physicalDevice)
                        vk::PhysicalDeviceVulkan13Features,
                        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
         featureChain = {
-            {}, // vk::PhysicalDeviceFeatures2
+            {.features = {.samplerAnisotropy = true}}, // vk::PhysicalDeviceFeatures2
             {.synchronization2 = true,
              .dynamicRendering = true}, // vk::PhysicalDeviceVulkan13Features
-            {.extendedDynamicState =
-                 true} // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+            {.extendedDynamicState = true} // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
         };
 
     // create a Device
@@ -611,7 +612,7 @@ void createTextureImage()
   stbi_image_free(pixels);
 
   std::tie(textureImage, textureImageMemory) = createImage(texWidth, texHeight, 
-                                                           vk::Format::eB8G8R8A8Srgb, vk::ImageTiling::eOptimal, 
+                                                           vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal, 
                                                            vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
                                                            vk::MemoryPropertyFlagBits::eDeviceLocal);
   vk::raii::CommandBuffer commandBuffer = beginSingleTimeCommands();
